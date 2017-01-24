@@ -1,12 +1,10 @@
 apply plugin: 'com.android.library'
-apply plugin: 'android-maven'
 
 android {
-      compileSdkVersion 25
+    compileSdkVersion 25
     buildToolsVersion '25.0.2'
 
     defaultConfig {
-        applicationId 'com.gitonway.lee.niftynotification.lib'
         minSdkVersion 10
         targetSdkVersion 25
         versionCode 1
@@ -14,7 +12,6 @@ android {
     }
     buildTypes {
         release {
-            runProguard false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
