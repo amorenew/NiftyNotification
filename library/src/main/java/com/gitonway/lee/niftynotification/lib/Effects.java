@@ -7,6 +7,7 @@ import com.gitonway.lee.niftynotification.lib.effects.Scale;
 import com.gitonway.lee.niftynotification.lib.effects.SlideIn;
 import com.gitonway.lee.niftynotification.lib.effects.SlideOnTop;
 import com.gitonway.lee.niftynotification.lib.effects.Standard;
+import com.gitonway.lee.niftynotification.lib.effects.StandardBottom;
 import com.gitonway.lee.niftynotification.lib.effects.ThumbSlider;
 
 /*
@@ -26,6 +27,7 @@ import com.gitonway.lee.niftynotification.lib.effects.ThumbSlider;
  */
 public enum Effects {
     standard(Standard.class),
+    standardBottom(StandardBottom.class),
     slideOnTop(SlideOnTop.class),
     flip(Flip.class),
     slideIn(SlideIn.class),
@@ -36,7 +38,7 @@ public enum Effects {
 
     private Class<? extends BaseEffect> effectsClazz;
 
-    private Effects(Class<? extends BaseEffect> mclass) {
+    Effects(Class<? extends BaseEffect> mclass) {
         effectsClazz = mclass;
     }
 

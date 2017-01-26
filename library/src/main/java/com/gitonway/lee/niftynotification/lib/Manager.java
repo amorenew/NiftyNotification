@@ -18,7 +18,6 @@ package com.gitonway.lee.niftynotification.lib;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
-import android.content.res.Configuration;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Message;
@@ -27,31 +26,19 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.widget.FrameLayout;
-import android.widget.Toast;
 
 import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class Manager extends Handler {
-    private static final class Messages {
-        private Messages() {
-        }
-
-        public static final int DISPLAY_NOTIFICATION = 0x20140813;
-        public static final int ADD_TO_VIEW = 0x20140814;
-        public static final int REMOVE_NOTIFICATION = 0x20140815;
-        public static final int REMOVE_NOTIFICATION_VIEW = 0x20140816;
-    }
-
     private static Manager INSTANCE;
-
     private final Queue<NiftyNotificationView> notifyQueue;
-
     private boolean isSticky=false;
 
     private Manager() {
         notifyQueue = new LinkedBlockingQueue<NiftyNotificationView>();
     }
+
     public static synchronized Manager getInstance() {
         if (null == INSTANCE) {
             INSTANCE = new Manager();
@@ -67,6 +54,7 @@ public class Manager extends Handler {
         }
 
     }
+
     void addSticky(NiftyNotificationView crouton) {
         Log.i("count",crouton.getViewGroup().getChildCount()+"   "+notifyQueue.size());
 
@@ -80,6 +68,7 @@ public class Manager extends Handler {
         }
 
     }
+
     void removeSticky(){
         NiftyNotificationView notify = notifyQueue.peek();
         if(notify!=null) {
@@ -144,7 +133,6 @@ public class Manager extends Handler {
         super.handleMessage(msg);
     }
 
-
     private void displayNotify(boolean sticky) {
 
         if (notifyQueue.isEmpty()) {
@@ -166,6 +154,7 @@ public class Manager extends Handler {
                     calculateCroutonDuration(currentNotify));
         }
     }
+
     private void addNotifyToView(final NiftyNotificationView notify) {
         if (notify.isShowing()) {
             return;
@@ -209,7 +198,7 @@ public class Manager extends Handler {
                         notifyView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
                     }
 
-                    notify.getEffects().getAnimator().setDuration(notify.getConfiguration().animDuration).in(notify.getView());
+                    notify.getEffects().getAnimator().setDuration(notify.getNotifyConfiguration().animDuration).in(notify.getView());
                     if(!isSticky){
                         sendMessageDelayed(notify, Messages.REMOVE_NOTIFICATION,
                                 notify.getDispalyDuration()
@@ -221,16 +210,18 @@ public class Manager extends Handler {
         }
 
     }
+
     protected void removeNotify(NiftyNotificationView notify) {
         View notifyView = notify.getView();
         ViewGroup notifyParentView = (ViewGroup) notifyView.getParent();
         if (null != notifyParentView) {
-            notify.getEffects().getAnimator().setDuration(notify.getConfiguration().animDuration).out(notify.getView());
+            notify.getEffects().getAnimator().setDuration(notify.getNotifyConfiguration().animDuration).out(notify.getView());
             sendMessageDelayed(notify, Messages.REMOVE_NOTIFICATION_VIEW, notify.getOutDuration());
 
             sendMessageDelayed(notify, Messages.DISPLAY_NOTIFICATION, notify.getOutDuration());
         }
     }
+
     protected void removeNotifyView(NiftyNotificationView notify) {
         View notifyView = notify.getView();
         ViewGroup notifyParentView = (ViewGroup) notifyView.getParent();
@@ -242,6 +233,16 @@ public class Manager extends Handler {
                 removed.detachActivity();
                 removed.detachViewGroup();
             }
+        }
+    }
+
+    private static final class Messages {
+        public static final int DISPLAY_NOTIFICATION = 0x20140813;
+        public static final int ADD_TO_VIEW = 0x20140814;
+        public static final int REMOVE_NOTIFICATION = 0x20140815;
+        public static final int REMOVE_NOTIFICATION_VIEW = 0x20140816;
+
+        private Messages() {
         }
     }
 

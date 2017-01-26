@@ -17,7 +17,7 @@ package com.gitonway.lee.niftynotification.lib.effects;
 
 import android.view.View;
 
-import com.gitonway.lee.niftynotification.lib.Configuration;
+import com.gitonway.lee.niftynotification.lib.NotifyConfiguration;
 import com.nineoldandroids.animation.AnimatorSet;
 import com.nineoldandroids.view.ViewHelper;
 
@@ -26,7 +26,7 @@ public abstract class BaseEffect {
     public static final int DURATION;
 
     static {
-        DURATION = Configuration.ANIM_DURATION;
+        DURATION = NotifyConfiguration.ANIM_DURATION;
     }
     public long mDuration=DURATION ;
 
@@ -56,12 +56,14 @@ public abstract class BaseEffect {
         ViewHelper.setPivotX(view, view.getWidth() / 2.0f);
         ViewHelper.setPivotY(view, view.getHeight() / 2.0f);
     }
+
+    public long getDuration() {
+        return getAnimDuration(mDuration);
+    }
+
     public BaseEffect setDuration(long duration) {
         this.mDuration = duration;
         return this;
-    }
-    public long getDuration(){
-        return getAnimDuration(mDuration);
     }
 
     public AnimatorSet getAnimatorSet() {

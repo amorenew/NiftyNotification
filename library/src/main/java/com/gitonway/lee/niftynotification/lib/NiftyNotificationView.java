@@ -16,10 +16,7 @@ package com.gitonway.lee.niftynotification.lib;
  */
 
 import android.app.Activity;
-import android.content.Context;
-import android.content.res.Resources;
 import android.graphics.Color;
-import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.text.TextUtils;
 import android.view.Gravity;
@@ -27,8 +24,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
-import android.widget.RelativeLayout;
+import android.widget.LinearLayout;
 import android.widget.TextView;
+
 
 public class NiftyNotificationView {
 
@@ -37,13 +35,9 @@ public class NiftyNotificationView {
     private static final int TEXT_ID = android.R.id.message;
 
     private static final int IMAGE_ID = android.R.id.icon;
-
-    private Configuration configuration = null;
-
     private final CharSequence text;
-
     private final Effects effects;
-
+    private NotifyConfiguration notifyConfiguration = null;
     private Activity activity;
 
     private ViewGroup viewGroup;
@@ -52,7 +46,7 @@ public class NiftyNotificationView {
 
     private Drawable iconDrawable;
 
-    private int  iconRes;
+    private int iconRes;
 
     private boolean isDefault;
 
@@ -63,40 +57,52 @@ public class NiftyNotificationView {
         if ((activity == null) || (text == null)) {
             throw new IllegalArgumentException(NULL_PARAMETERS_ARE_NOT_ACCEPTED);
         }
-        isDefault=true;
+        isDefault = true;
         this.activity = activity;
         this.text = text;
         this.effects = effects;
         this.viewGroup = viewGroup;
-        this.configuration = new Configuration.Builder().build();
+        this.notifyConfiguration = new NotifyConfiguration.Builder().build();
         init(effects);
     }
 
-    private NiftyNotificationView(Activity activity, CharSequence text, Effects effects, ViewGroup viewGroup, Configuration configuration) {
-        if ((activity == null) || (text == null) || (configuration == null)) {
+    private NiftyNotificationView(Activity activity, CharSequence text, Effects effects, ViewGroup viewGroup, NotifyConfiguration notifyConfiguration) {
+        if ((activity == null) || (text == null) || (notifyConfiguration == null)) {
             throw new IllegalArgumentException(NULL_PARAMETERS_ARE_NOT_ACCEPTED);
         }
-        isDefault=false;
+        isDefault = false;
         this.activity = activity;
         this.text = text;
         this.effects = effects;
         this.viewGroup = viewGroup;
-        this.configuration = configuration;
+        this.notifyConfiguration = notifyConfiguration;
         init(effects);
     }
 
-    private void init(Effects effects){
-        this.iconDrawable=null;
-        this.iconRes=0;
-    }
     public static NiftyNotificationView build(Activity activity, CharSequence text, Effects effects, int viewGroupResId) {
         return new NiftyNotificationView(activity, text, effects, (ViewGroup) activity.findViewById(viewGroupResId));
     }
 
-    public static NiftyNotificationView build(Activity activity, CharSequence text, Effects effects, int viewGroupResId, Configuration configuration) {
-        return new NiftyNotificationView(activity, text, effects, (ViewGroup) activity.findViewById(viewGroupResId), configuration);
+    public static NiftyNotificationView build(Activity activity, CharSequence text, Effects effects, int viewGroupResId, NotifyConfiguration notifyConfiguration) {
+        return new NiftyNotificationView(activity, text, effects, (ViewGroup) activity.findViewById(viewGroupResId), notifyConfiguration);
     }
 
+    public static NiftyNotificationView build(Activity activity, CharSequence text, Effects effects) {
+        final ViewGroup viewGroup = (ViewGroup) ((ViewGroup) activity
+                .findViewById(android.R.id.content)).getChildAt(0);
+        return new NiftyNotificationView(activity, text, effects, viewGroup);
+    }
+
+    public static NiftyNotificationView build(Activity activity, CharSequence text, Effects effects, NotifyConfiguration notifyConfiguration) {
+        final ViewGroup viewGroup = (ViewGroup) ((ViewGroup) activity
+                .findViewById(android.R.id.content)).getChildAt(0);
+        return new NiftyNotificationView(activity, text, effects, viewGroup, notifyConfiguration);
+    }
+
+    private void init(Effects effects) {
+        this.iconDrawable = null;
+        this.iconRes = 0;
+    }
 
     public long getInDuration() {
         return effects.getAnimator().getDuration();
@@ -107,15 +113,15 @@ public class NiftyNotificationView {
     }
 
     public long getDispalyDuration() {
-        return this.configuration.dispalyDuration;
+        return this.notifyConfiguration.displayDuration;
     }
 
     public Effects getEffects() {
         return effects;
     }
 
-    public Configuration getConfiguration() {
-        return configuration;
+    public NotifyConfiguration getNotifyConfiguration() {
+        return notifyConfiguration;
     }
 
     Activity getActivity() {
@@ -154,109 +160,78 @@ public class NiftyNotificationView {
     }
 
     private void initializeNotifyView() {
-        if (this.activity!=null) {
-
-            this.notifyView = initializeCroutonViewGroup();
-
-            RelativeLayout contentView = initializeContentView();
-            this.notifyView.addView(contentView);
+        if (this.activity != null) {
+            this.notifyView = initContainerView();
+            LinearLayout contentView = initToastView();
+            this.notifyView.addView(contentView, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER));
         }
     }
 
-    private FrameLayout initializeCroutonViewGroup() {
-
-        FrameLayout notifyView = new FrameLayout(this.activity);
-
+    private FrameLayout initContainerView() {
+        FrameLayout notifyView = (FrameLayout) getActivity()
+                .getLayoutInflater().inflate(R.layout.view_toast_container, null);
         if (null != onClickListener) {
             notifyView.setOnClickListener(onClickListener);
         }
-
-        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.WRAP_CONTENT);
-        notifyView.setLayoutParams(lp);
-
-
         return notifyView;
     }
 
-    private RelativeLayout initializeContentView() {
-
-        RelativeLayout contentView = new RelativeLayout(this.activity);
-        RelativeLayout.LayoutParams lp = new RelativeLayout.LayoutParams(
-                RelativeLayout.LayoutParams.MATCH_PARENT,
-                RelativeLayout.LayoutParams.MATCH_PARENT);
-        contentView.setLayoutParams(lp);
-
-
-        ImageView image = null;
+    private LinearLayout initToastView() {
+        LinearLayout toastLayout = (LinearLayout) getActivity()
+                .getLayoutInflater()
+                .inflate(R.layout.toast_view, null);
         if ((null != iconDrawable) || (0 != iconRes)) {
-            image = initializeImageView();
-            contentView.addView(image, image.getLayoutParams());
+            initToastImage(toastLayout);
+        } else {
+            toastLayout.removeView(toastLayout.findViewById(IMAGE_ID));
         }
-
-        TextView text = initializeTextView();
-
-        RelativeLayout.LayoutParams textParams = new RelativeLayout.LayoutParams(
-                RelativeLayout.LayoutParams.MATCH_PARENT,
-                RelativeLayout.LayoutParams.WRAP_CONTENT);
-
-        if (null != image) {
-            textParams.addRule(RelativeLayout.RIGHT_OF, image.getId());
-        }
-
-        textParams.addRule(RelativeLayout.CENTER_IN_PARENT);
-        contentView.addView(text, textParams);
-        return contentView;
+        initToastText(toastLayout);
+        return toastLayout;
     }
 
-    private TextView initializeTextView() {
-        int padding = px2dip(this.configuration.textPadding);
-        int viewHeight = px2dip(this.configuration.viewHeight);
-        TextView text = new TextView(this.activity);
-        text.setMaxHeight(viewHeight);
-        text.setMaxHeight(viewHeight);
+    private TextView initToastText(LinearLayout toastLayout) {
+        int padding = px2dip(this.notifyConfiguration.textPadding);
+        int viewHeight = px2dip(this.notifyConfiguration.viewHeight);
+        int viewWidth = px2dip(this.notifyConfiguration.viewWidth);
+        int textSize = px2dip(this.notifyConfiguration.textSize);
+        TextView text = (TextView) toastLayout.findViewById(TEXT_ID);
+        text.setMinimumHeight(viewHeight);
+        text.setMinimumWidth(viewWidth);
         text.setId(TEXT_ID);
         text.setText(this.text);
-        text.setMaxLines(this.configuration.textLines);
-        text.setEllipsize(TextUtils.TruncateAt.END);
-        text.setPadding(padding*2, padding, padding*2, padding);
-        text.setTextColor(Color.parseColor(this.configuration.textColor));
-        text.setBackgroundColor(Color.parseColor(this.configuration.backgroundColor));
+        text.setTextSize(textSize);
+        text.setMaxLines(this.notifyConfiguration.textLines);
+        text.setEllipsize(TextUtils.TruncateAt.MARQUEE);
+        if (padding > 0)
+            text.setPadding(padding * 2, padding, padding * 2, padding);
+        text.setTextColor(Color.parseColor(this.notifyConfiguration.textColor));
+        text.setBackgroundColor(Color.parseColor(this.notifyConfiguration.backgroundColor));
 
         if ((null != iconDrawable) || (0 != iconRes)) {
             text.setMinHeight(viewHeight);
-            text.setGravity(isDefault?Gravity.CENTER_VERTICAL:this.configuration.textGravity);
-        }else {
-            text.setGravity(isDefault?Gravity.CENTER:this.configuration.textGravity);
+            text.setGravity(isDefault ? Gravity.CENTER_VERTICAL : this.notifyConfiguration.textGravity);
+        } else {
+            text.setGravity(isDefault ? Gravity.CENTER : this.notifyConfiguration.textGravity);
         }
         return text;
     }
-    private ImageView initializeImageView() {
-        int maxValue=px2dip(this.configuration.viewHeight);
-        ImageView image = new ImageView(this.activity);
+
+    private ImageView initToastImage(LinearLayout toastLayout) {
+        int maxValue = px2dip(this.notifyConfiguration.viewHeight);
+        ImageView image = (ImageView) toastLayout.findViewById(IMAGE_ID);
         image.setMinimumHeight(maxValue);
         image.setMinimumWidth(maxValue);
         image.setMaxWidth(maxValue);
         image.setMaxHeight(maxValue);
-        image.setId(IMAGE_ID);
-        image.setBackgroundColor(Color.parseColor(this.configuration.iconBackgroundColor));
+        image.setBackgroundColor(Color.parseColor(this.notifyConfiguration.iconBackgroundColor));
         image.setAdjustViewBounds(true);
         image.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
-
         if (null != iconDrawable) {
             image.setImageDrawable(iconDrawable);
         }
-
-        if (iconRes!= 0) {
+        if (iconRes != 0) {
             image.setImageResource(iconRes);
         }
-
-        RelativeLayout.LayoutParams imageParams = new RelativeLayout.LayoutParams(
-                RelativeLayout.LayoutParams.WRAP_CONTENT,
-                RelativeLayout.LayoutParams.WRAP_CONTENT);
-        imageParams.addRule(RelativeLayout.ALIGN_PARENT_LEFT, RelativeLayout.TRUE);
-        imageParams.addRule(RelativeLayout.CENTER_VERTICAL, RelativeLayout.TRUE);
-
-        image.setLayoutParams(imageParams);
         return image;
     }
 
@@ -264,16 +239,19 @@ public class NiftyNotificationView {
         final float scale = activity.getResources().getDisplayMetrics().density;
         return (int) (pxValue * scale + 0.5f);
     }
-    /*******************Call these methods************************/
+
+    /*******************
+     * Call these methods
+     ************************/
 
 
-    public NiftyNotificationView setIcon(Drawable iconDrawable){
-        this.iconDrawable=iconDrawable;
+    public NiftyNotificationView setIcon(Drawable iconDrawable) {
+        this.iconDrawable = iconDrawable;
         return this;
     }
 
-    public NiftyNotificationView setIcon(int iconRes){
-        this.iconRes=iconRes;
+    public NiftyNotificationView setIcon(int iconRes) {
+        this.iconRes = iconRes;
         return this;
     }
 
@@ -286,17 +264,19 @@ public class NiftyNotificationView {
 
         show(true);
     }
+
     public void show(boolean repeat) {
 
-        Manager.getInstance().add(this,repeat);
+        Manager.getInstance().add(this, repeat);
     }
 
     public void showSticky() {
 
         Manager.getInstance().addSticky(this);
     }
+
     //only remove sticky notification
-    public void removeSticky(){
+    public void removeSticky() {
         Manager.getInstance().removeSticky();
     }
 
